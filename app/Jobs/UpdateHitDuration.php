@@ -37,11 +37,12 @@ class UpdateHitDuration implements ShouldQueue
         }
 
         $hash = (new VisitorIdentity($site, $this->ip, $this->userAgent))->hash();
+        $pathname = VisitorIdentity::normalizePathname($this->pathname);
 
         $event = Event::query()
             ->where('site_id', $site->id)
             ->where('visitor_hash', $hash)
-            ->where('pathname', $this->pathname)
+            ->where('pathname', $pathname)
             ->whereNull('duration_seconds')
             ->latest('occurred_at')
             ->first();

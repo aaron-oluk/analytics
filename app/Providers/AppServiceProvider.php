@@ -31,7 +31,12 @@ class AppServiceProvider extends ServiceProvider
         // without needing per-site auth, which the tracking snippet can't
         // hold secretly anyway (it's public JS on the customer's page).
         RateLimiter::for('analytics-ingest', function ($request) {
-            return Limit::perMinute(300)->by($request->ip());
+            $device = $request->ip().'|'.(string) $request->userAgent();
+
+            return [
+                Limit::perMinute(300)->by($request->ip()),
+                Limit::perMinute(60)->by($device),
+            ];
         });
     }
 }

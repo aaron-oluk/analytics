@@ -8,6 +8,14 @@ return [
     'session_timeout_minutes' => 30,
 
     /*
+     * Same visitor (daily-salted hash of IP + user-agent) hitting the
+     * same pathname again inside this window is ignored. Stops refresh
+     * loops, double-mounted snippets, and prefetch noise from inflating
+     * pageviews. Set to 0 to disable.
+     */
+    'pageview_dedupe_seconds' => (int) env('ANALYTICS_PAGEVIEW_DEDUPE_SECONDS', 30),
+
+    /*
      * Raw per-hit rows in the `events` table are only needed for the
      * realtime view and for the nightly rollup job. Anything older than
      * this is safe to prune once it has been aggregated into daily_stats /
@@ -16,9 +24,9 @@ return [
     'raw_event_retention_days' => 90,
 
     /*
-     * Queue name used when QUEUE_CONNECTION is database or redis.
-     * The default deferred driver ignores this and runs jobs after
-     * the HTTP response in the same process.
+     * Queue name used only if ingest is ever switched back to a
+     * queued dispatch. CollectController uses dispatchSync, so this
+     * is unused on the live collect path.
      */
     'queue' => env('ANALYTICS_QUEUE', 'analytics'),
 

@@ -30,6 +30,37 @@ class VisitorIdentity
         return md5(implode('|', [$this->site->currentSalt(), $this->ip, $this->userAgent]));
     }
 
+    /**
+     * Claim the right to record a pageview for this visitor + path.
+     * Returns false when the same device already hit this path inside
+     * the dedupe window, so ingest can drop the duplicate.
+     */
+    public function claimPageview(string $pathname): bool
+    {
+        $seconds = (int) config('analytics.pageview_dedupe_seconds');
+
+        if ($seconds <= 0) {
+            return true;
+        }
+
+        $key = "analytics:pageview:{$this->site->id}:{$this->hash()}:{$pathname}";
+
+        return Cache::add($key, true, now()->addSeconds($seconds));
+    }
+
+    public static function normalizePathname(string $pathname): string
+    {
+        $path = parse_url($pathname, PHP_URL_PATH);
+
+        if (! is_string($path) || $path === '') {
+            $path = $pathname !== '' ? $pathname : '/';
+        }
+
+        $path = '/'.ltrim($path, '/');
+
+        return $path === '/' ? '/' : rtrim($path, '/');
+    }
+
     public function isNewVisitorToday(): bool
     {
         $key = "analytics:visitor:{$this->site->id}:{$this->hash()}";

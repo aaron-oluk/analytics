@@ -14,10 +14,10 @@ use Illuminate\Support\Facades\Cache;
 
 /**
  * Public, unauthenticated ingestion endpoint hit by the tracking snippet on
- * every tracked site. Kept intentionally trivial: look up the site,
- * hand off enrichment to a deferred job, and return immediately. The
- * default deferred queue runs RecordHit after the 204 is sent, so
- * production does not need a separate queue worker.
+ * every tracked site. Site lookup stays on the request; enrichment runs
+ * with dispatchSync so a hit is written before 204 is returned. That way
+ * production records visits without a queue worker, even if
+ * QUEUE_CONNECTION is still database.
  */
 class CollectController extends Controller
 {
@@ -29,7 +29,7 @@ class CollectController extends Controller
             return response()->noContent();
         }
 
-        RecordHit::dispatch(
+        RecordHit::dispatchSync(
             siteId: $site->id,
             ip: $request->ip(),
             userAgent: (string) $request->userAgent(),
@@ -50,7 +50,7 @@ class CollectController extends Controller
         $site = $this->resolveSite($request->string('domain')->toString());
 
         if ($site) {
-            UpdateHitDuration::dispatch(
+            UpdateHitDuration::dispatchSync(
                 siteId: $site->id,
                 ip: $request->ip(),
                 userAgent: (string) $request->userAgent(),
@@ -65,10 +65,20 @@ class CollectController extends Controller
     private function resolveSite(string $domain): ?Site
     {
         $domain = preg_replace('#^www\.#', '', strtolower($domain));
+        $key = "analytics:site-by-domain:{$domain}";
+        $cached = Cache::get($key);
 
-        return Cache::remember("analytics:site-by-domain:{$domain}", now()->addMinutes(10), function () use ($domain) {
-            return Site::query()->where('domain', $domain)->first();
-        });
+        if ($cached instanceof Site) {
+            return $cached;
+        }
+
+        $site = Site::query()->where('domain', $domain)->first();
+
+        if ($site) {
+            Cache::put($key, $site, now()->addMinutes(10));
+        }
+
+        return $site;
     }
 
     private function externalReferrerDomain(?string $referrer, string $siteDomain): ?string

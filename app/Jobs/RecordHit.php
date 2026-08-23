@@ -49,7 +49,13 @@ class RecordHit implements ShouldQueue
             return;
         }
 
+        $pathname = VisitorIdentity::normalizePathname($this->pathname);
         $identity = new VisitorIdentity($site, $this->ip, $this->userAgent);
+
+        if (! $identity->claimPageview($pathname)) {
+            return;
+        }
+
         [$sessionId, $isNewSession] = $identity->resolveSession();
 
         $agent = new Agent;
@@ -59,7 +65,7 @@ class RecordHit implements ShouldQueue
             'site_id' => $site->id,
             'visitor_hash' => $identity->hash(),
             'session_id' => $sessionId,
-            'pathname' => $this->pathname,
+            'pathname' => $pathname,
             'referrer_domain' => $this->referrerDomain,
             'utm_source' => $this->utmSource,
             'utm_medium' => $this->utmMedium,

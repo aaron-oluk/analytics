@@ -36,6 +36,29 @@ class CollectEndpointTest extends TestCase
         $this->assertNotEmpty($event->visitor_hash);
     }
 
+    public function test_it_records_a_pageview_without_a_queue_worker(): void
+    {
+        config(['queue.default' => 'database']);
+
+        Site::factory()->create(['domain' => 'example.com']);
+
+        $this->postJson('/api/collect', ['domain' => 'example.com', 'pathname' => '/'])->assertNoContent();
+
+        $this->assertDatabaseCount('events', 1);
+        $this->assertDatabaseCount('jobs', 0);
+    }
+
+    public function test_it_records_after_a_previous_unknown_domain_lookup(): void
+    {
+        $this->postJson('/api/collect', ['domain' => 'example.com', 'pathname' => '/'])->assertNoContent();
+        $this->assertDatabaseCount('events', 0);
+
+        Site::factory()->create(['domain' => 'example.com']);
+
+        $this->postJson('/api/collect', ['domain' => 'example.com', 'pathname' => '/'])->assertNoContent();
+        $this->assertDatabaseCount('events', 1);
+    }
+
     public function test_it_ignores_unknown_domains_without_error(): void
     {
         $response = $this->postJson('/api/collect', [
@@ -78,6 +101,45 @@ class CollectEndpointTest extends TestCase
         ])->assertNoContent();
 
         $this->assertSame(42, Event::first()->duration_seconds);
+    }
+
+    public function test_it_ignores_a_repeat_hit_from_the_same_device_and_path(): void
+    {
+        Site::factory()->create(['domain' => 'example.com']);
+
+        $this->postJson('/api/collect', ['domain' => 'example.com', 'pathname' => '/pricing'])->assertNoContent();
+        $this->postJson('/api/collect', ['domain' => 'example.com', 'pathname' => '/pricing/'])->assertNoContent();
+
+        $this->assertDatabaseCount('events', 1);
+    }
+
+    public function test_a_later_hit_on_the_same_path_is_recorded_after_the_dedupe_window(): void
+    {
+        Site::factory()->create(['domain' => 'example.com']);
+
+        $this->postJson('/api/collect', ['domain' => 'example.com', 'pathname' => '/pricing'])->assertNoContent();
+
+        $this->travel(31)->seconds();
+
+        $this->postJson('/api/collect', ['domain' => 'example.com', 'pathname' => '/pricing'])->assertNoContent();
+
+        $this->assertDatabaseCount('events', 2);
+    }
+
+    public function test_a_different_device_on_the_same_path_is_recorded(): void
+    {
+        Site::factory()->create(['domain' => 'example.com']);
+
+        $this->withHeaders(['User-Agent' => 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) Firefox/128.0'])
+            ->postJson('/api/collect', ['domain' => 'example.com', 'pathname' => '/pricing'])
+            ->assertNoContent();
+
+        $this->withHeaders(['User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/128.0.0.0'])
+            ->postJson('/api/collect', ['domain' => 'example.com', 'pathname' => '/pricing'])
+            ->assertNoContent();
+
+        $this->assertDatabaseCount('events', 2);
+        $this->assertNotSame(Event::oldest('id')->first()->visitor_hash, Event::latest('id')->first()->visitor_hash);
     }
 
     public function test_bot_traffic_is_dropped(): void

@@ -12,7 +12,7 @@ Visitor loads a tracked page
         ▼
 public/tracker.js  ──POST /api/collect──►  CollectController
         │                                      │
-        │                                      ▼  (deferred, after 204)
+        │                                      ▼  (inline, no worker)
         │                                   RecordHit
         │                                      │
         │                                      ▼
@@ -57,7 +57,7 @@ The script origin is derived from its own `src`, so the same file works in local
 `POST /api/collect` and `POST /api/collect/duration` are public (the snippet cannot hide a secret). They are gated by:
 
 - A domain lookup: unknown domains get `204` and are ignored.
-- A per-IP rate limit of 300 requests/minute (`analytics-ingest`).
+- A rate limit of 300 requests/minute per IP, and 60/minute per IP + user-agent (`analytics-ingest`).
 - Open CORS on `api/*` so browsers on customer sites can POST here.
 
 `CollectController` looks the site up from cache (10 minutes), strips same-site referrers, and dispatches a job. It does not parse user-agents or write events on the request.
@@ -68,14 +68,15 @@ The script origin is derived from its own `src`, so the same file works in local
 
 1. Drops crawlers (`CrawlerDetect`).
 2. Builds an anonymous visitor hash from IP + user-agent + a **daily-rotating salt** (`VisitorIdentity`). Same person, next day → different hash, so days cannot be joined.
-3. Continues or starts a session (default 30 minutes of inactivity).
-4. Parses device / browser / OS (`jenssegers/agent`).
-5. Optionally resolves country via `GeoLocator` (default driver is `null`, so country is empty until you wire MaxMind).
-6. Inserts one `events` row.
+3. Drops a repeat hit from the same visitor on the same pathname inside `pageview_dedupe_seconds` (30). Refreshes and double-fired snippets do not create extra pageviews.
+4. Continues or starts a session (default 30 minutes of inactivity).
+5. Parses device / browser / OS (`jenssegers/agent`).
+6. Optionally resolves country via `GeoLocator` (default driver is `null`, so country is empty until you wire MaxMind).
+7. Inserts one `events` row.
 
 `UpdateHitDuration` recomputes the same visitor hash and writes `duration_seconds` onto the latest matching pageview. The browser never holds a server-issued id.
 
-The default queue is Laravel’s `deferred` driver: `/api/collect` returns `204`, then the job runs in the same request after the response is sent. No `queue:work` process is required after deploy. Switch `QUEUE_CONNECTION` to `database` (and run a worker on `--queue=analytics`) only if you want ingest fully off the PHP-FPM process.
+Ingest uses `dispatchSync`, so `RecordHit` runs during `/api/collect` and the event exists before the `204` goes back. A queue worker is not required, and a leftover `QUEUE_CONNECTION=database` in production will not strand hits.
 
 ### 5. The dashboard merges rollups with today
 
@@ -133,13 +134,14 @@ See `config/analytics.php` and `.env`:
 
 | Key | Default | Meaning |
 | --- | --- | --- |
-| `QUEUE_CONNECTION` | `deferred` | Runs ingest after the HTTP response; no worker |
+| `QUEUE_CONNECTION` | `sync` | Unused for ingest (`dispatchSync`); safe default for other jobs |
 | `ANALYTICS_QUEUE` | `analytics` | Queue name only if you switch to `database` / `redis` |
 | `ANALYTICS_GEOIP_DRIVER` | `null` | `null` skips country; swap in a MaxMind driver later |
+| `ANALYTICS_PAGEVIEW_DEDUPE_SECONDS` | `30` | Ignore same visitor + path inside this window |
 | `session_timeout_minutes` | `30` | Inactivity before a new session |
 | `raw_event_retention_days` | `90` | How long raw hits are kept after rollup |
 
-Tests force `sync` so jobs run inline.
+Ingest always runs inline via `dispatchSync`. Tests also set `QUEUE_CONNECTION=sync`.
 
 ## Local setup
 
