@@ -2,7 +2,10 @@
 
 namespace App\Services\Analytics;
 
+use App\Models\Event;
 use App\Models\Site;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Database\Eloquent\Builder as EloquentBuilder;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -112,6 +115,51 @@ class StatsRepository
         return $historic->sortByDesc('visitors')->take($limit)->values()->all();
     }
 
+    public function paginatedEvents(Site $site, Carbon $from, Carbon $to, array $filters = [], int $perPage = 50): LengthAwarePaginator
+    {
+        return $this->eventModelQuery($site, $from, $to, $filters)
+            ->orderByDesc('occurred_at')
+            ->paginate($perPage)
+            ->withQueryString();
+    }
+
+    public function eventModelQuery(Site $site, Carbon $from, Carbon $to, array $filters = []): EloquentBuilder
+    {
+        $query = Event::query()
+            ->where('site_id', $site->id)
+            ->whereBetween('occurred_at', [$from->copy()->startOfDay(), $to->copy()->endOfDay()]);
+
+        $this->applyFilters($query, $filters);
+
+        return $query;
+    }
+
+    /** @return array<int, object{date: string, visitors: int, pageviews: int, sessions: int}> */
+    public function dailyRows(Site $site, Carbon $from, Carbon $to, array $filters = []): array
+    {
+        $rows = $this->eventsInRange($site, $from, $to, $filters)
+            ->selectRaw('date(occurred_at) as date, count(distinct visitor_hash) as visitors, count(*) as pageviews, count(distinct session_id) as sessions')
+            ->groupBy(DB::raw('date(occurred_at)'))
+            ->orderBy('date')
+            ->get()
+            ->keyBy(fn ($row) => Carbon::parse($row->date)->toDateString());
+
+        $series = [];
+        for ($cursor = $from->copy(); $cursor->lte($to); $cursor->addDay()) {
+            $date = $cursor->toDateString();
+            $row = $rows->get($date);
+
+            $series[] = (object) [
+                'date' => $date,
+                'visitors' => (int) ($row->visitors ?? 0),
+                'pageviews' => (int) ($row->pageviews ?? 0),
+                'sessions' => (int) ($row->sessions ?? 0),
+            ];
+        }
+
+        return $series;
+    }
+
     public function realtimeVisitorCount(Site $site): int
     {
         return DB::table('events')
@@ -202,7 +250,7 @@ class StatsRepository
         return $query;
     }
 
-    private function applyFilters(Builder $query, array $filters): void
+    private function applyFilters(Builder|EloquentBuilder $query, array $filters): void
     {
         foreach ($filters as $key => $value) {
             match ($key) {

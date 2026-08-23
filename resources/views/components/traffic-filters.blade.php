@@ -60,7 +60,7 @@
     </div>
 
     @if ($range === 'custom')
-        <form method="GET" action="{{ route('sites.show', $site) }}" class="mt-3 flex flex-wrap items-end gap-3">
+        <form method="GET" action="{{ $filterUrl(['range' => 'custom']) }}" class="mt-3 flex flex-wrap items-end gap-3">
             <input type="hidden" name="range" value="custom">
             @foreach ($filters as $key => $value)
                 <input type="hidden" name="{{ $key }}" value="{{ $value }}">

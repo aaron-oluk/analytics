@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\SiteController;
+use App\Http\Controllers\SiteExportController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -10,6 +11,8 @@ Route::get('/', function () {
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::redirect('/dashboard', '/sites')->name('dashboard');
+    Route::get('/sites/{site}/export', [SiteExportController::class, 'show'])->name('sites.export');
+    Route::get('/sites/{site}/export/{dataset}', [SiteExportController::class, 'download'])->name('sites.export.download');
     Route::resource('sites', SiteController::class);
 });
 

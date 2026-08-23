@@ -87,6 +87,7 @@ Ingest uses `dispatchSync`, so `RecordHit` runs during `/api/collect` and the ev
 - A daily visitors chart
 - Top pages, referrers, countries, devices, browsers
 - Range chips: today, 7 / 30 / 90 days
+- Export: a filterable pageview table and CSV downloads (pageviews, daily totals, pages, referrers, countries, devices, browsers, OS, UTM)
 
 `StatsRepository` is the only read path. Days before today come from `daily_stats` / `stat_breakdowns`. Today is still accumulating, so it is counted live from `events` and merged in.
 
@@ -166,6 +167,7 @@ app/Jobs/RecordHit.php                           enrich + write event
 app/Jobs/UpdateHitDuration.php                   time-on-page
 app/Services/Analytics/VisitorIdentity.php       hash + session
 app/Services/Analytics/StatsRepository.php       dashboard reads
+app/Http/Controllers/SiteExportController.php    analyse and CSV export
 app/Console/Commands/AggregateDailyStats.php     nightly rollup
 public/tracker.js                                customer-site snippet
 ```

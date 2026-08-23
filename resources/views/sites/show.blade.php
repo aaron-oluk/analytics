@@ -32,13 +32,22 @@
                 <p class="mt-1 truncate text-sm text-zinc-500">{{ $site->domain }} · {{ $rangeLabel }}</p>
             </div>
 
-            <a
-                href="{{ route('sites.edit', $site) }}"
-                class="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-white text-zinc-500 ring-1 ring-zinc-200 transition hover:text-zinc-900"
-                title="Settings"
-            >
-                <i class="bx bx-cog text-lg"></i>
-            </a>
+            <div class="flex items-center gap-2">
+                <a
+                    href="{{ $exportUrl }}"
+                    class="inline-flex h-9 items-center gap-1.5 rounded-lg bg-white px-3 text-sm font-medium text-zinc-600 ring-1 ring-zinc-200 transition hover:text-zinc-900"
+                >
+                    <i class="bx bx-download text-lg"></i>
+                    Export
+                </a>
+                <a
+                    href="{{ route('sites.edit', $site) }}"
+                    class="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-white text-zinc-500 ring-1 ring-zinc-200 transition hover:text-zinc-900"
+                    title="Settings"
+                >
+                    <i class="bx bx-cog text-lg"></i>
+                </a>
+            </div>
         </div>
 
         <x-traffic-filters
