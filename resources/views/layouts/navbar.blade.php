@@ -10,11 +10,13 @@
     <div class="flex min-w-0 items-center gap-3">
         <button
             type="button"
-            @click="sidebarOpen = true"
-            class="inline-flex h-9 w-9 items-center justify-center rounded-lg text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900 lg:hidden"
-            aria-label="Open menu"
+            @click="toggleSidebar()"
+            class="inline-flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-sm font-medium text-zinc-600 transition hover:bg-zinc-100 hover:text-zinc-900"
+            :aria-label="sidebarIsOpen() ? 'Close sidebar' : 'Open sidebar'"
+            :aria-expanded="sidebarIsOpen()"
         >
-            <i class="bx bx-menu text-2xl"></i>
+            <i class="bx text-xl" :class="sidebarIsOpen() ? 'bx-x' : 'bx-menu'"></i>
+            <span class="hidden sm:inline" x-text="sidebarIsOpen() ? 'Close sidebar' : 'Open sidebar'">Open sidebar</span>
         </button>
 
         <a href="{{ route('sites.index') }}" class="flex items-center gap-2 text-zinc-900 lg:hidden">

@@ -1,8 +1,14 @@
 @php
     $rangeLabel = match ($range) {
         'today' => 'Today',
+        'yesterday' => 'Yesterday',
+        '14d' => 'Last 14 days',
         '30d' => 'Last 30 days',
+        'month' => 'This month',
+        'last_month' => 'Last month',
         '90d' => 'Last 90 days',
+        '12m' => 'Last 12 months',
+        'custom' => $from->toFormattedDateString().' – '.$to->toFormattedDateString(),
         default => 'Last 7 days',
     };
     $snippet = '<script defer src="'.url('/tracker.js').'" data-site="'.$site->domain.'"></script>';
@@ -26,26 +32,24 @@
                 <p class="mt-1 truncate text-sm text-zinc-500">{{ $site->domain }} · {{ $rangeLabel }}</p>
             </div>
 
-            <div class="flex flex-wrap items-center gap-2">
-                <div class="inline-flex rounded-xl bg-white p-1 ring-1 ring-zinc-200">
-                    @foreach (['today' => 'Today', '7d' => '7d', '30d' => '30d', '90d' => '90d'] as $value => $label)
-                        <a
-                            href="{{ route('sites.show', [$site, 'range' => $value]) }}"
-                            class="rounded-lg px-3 py-1.5 text-sm font-medium transition {{ $range === $value ? 'bg-zinc-900 text-white shadow-sm' : 'text-zinc-500 hover:text-zinc-900' }}"
-                        >
-                            {{ $label }}
-                        </a>
-                    @endforeach
-                </div>
-                <a
-                    href="{{ route('sites.edit', $site) }}"
-                    class="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-white text-zinc-500 ring-1 ring-zinc-200 transition hover:text-zinc-900"
-                    title="Settings"
-                >
-                    <i class="bx bx-cog text-lg"></i>
-                </a>
-            </div>
+            <a
+                href="{{ route('sites.edit', $site) }}"
+                class="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-white text-zinc-500 ring-1 ring-zinc-200 transition hover:text-zinc-900"
+                title="Settings"
+            >
+                <i class="bx bx-cog text-lg"></i>
+            </a>
         </div>
+
+        <x-traffic-filters
+            :site="$site"
+            :range="$range"
+            :from="$from"
+            :to="$to"
+            :filters="$filters"
+            :filter-url="$filterUrl"
+            :filter-options="$filterOptions"
+        />
 
         <details class="group" {{ $overview['pageviews'] === 0 ? 'open' : '' }}>
             <x-card padding="px-5 py-4">
@@ -64,11 +68,11 @@
                     x-data="{ copied: false, snippet: {{ \Illuminate\Support\Js::from($snippet) }} }"
                     class="mt-3 flex items-start gap-2"
                 >
-                    <pre class="min-w-0 flex-1 overflow-x-auto rounded-xl bg-zinc-950 px-4 py-3 text-xs leading-relaxed text-zinc-100"><code x-text="snippet"></code></pre>
+                    <pre class="min-w-0 flex-1 overflow-x-auto rounded-lg bg-zinc-950 px-4 py-3 text-xs leading-relaxed text-zinc-100"><code x-text="snippet"></code></pre>
                     <button
                         type="button"
                         @click="navigator.clipboard.writeText(snippet); copied = true; setTimeout(() => copied = false, 1600)"
-                        class="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-xl bg-zinc-900 px-3 text-xs font-medium text-white hover:bg-zinc-800"
+                        class="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-lg bg-zinc-900 px-3 text-xs font-medium text-white hover:bg-zinc-800"
                     >
                         <i class="bx text-base" :class="copied ? 'bx-check' : 'bx-copy'"></i>
                         <span x-text="copied ? 'Copied' : 'Copy'"></span>
@@ -95,12 +99,12 @@
         </x-card>
 
         <div class="grid gap-6 md:grid-cols-2">
-            <x-breakdown title="Top pages" icon="bx-file" :rows="$topPages" />
-            <x-breakdown title="Top referrers" icon="bx-link" :rows="$topReferrers" />
-            <x-breakdown title="Countries" icon="bx-globe" :rows="$topCountries" />
+            <x-breakdown title="Top pages" icon="bx-file" :rows="$topPages" :filter-url="$filterUrl" filter-key="path" />
+            <x-breakdown title="Top referrers" icon="bx-link" :rows="$topReferrers" :filter-url="$filterUrl" filter-key="referrer" />
+            <x-breakdown title="Countries" icon="bx-globe" :rows="$topCountries" :filter-url="$filterUrl" filter-key="country" />
             <div class="grid gap-6">
-                <x-breakdown title="Devices" icon="bx-devices" :rows="$topDevices" />
-                <x-breakdown title="Browsers" icon="bx-window" :rows="$topBrowsers" />
+                <x-breakdown title="Devices" icon="bx-devices" :rows="$topDevices" :filter-url="$filterUrl" filter-key="device" />
+                <x-breakdown title="Browsers" icon="bx-window" :rows="$topBrowsers" :filter-url="$filterUrl" filter-key="browser" />
             </div>
         </div>
     </x-page>

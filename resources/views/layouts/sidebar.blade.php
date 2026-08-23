@@ -4,7 +4,10 @@
 @endphp
 
 {{-- Desktop sidebar --}}
-<aside class="fixed inset-y-0 start-0 z-30 hidden w-64 flex-col border-e border-zinc-200/80 bg-white lg:flex">
+<aside
+    class="fixed inset-y-0 start-0 z-30 hidden flex-col overflow-visible border-e border-zinc-200/80 bg-white transition-[width] duration-200 lg:flex"
+    :class="sidebarExpanded ? 'w-64' : 'w-16'"
+>
     @include('layouts.partials.sidebar-nav', ['navSites' => $navSites, 'currentSite' => $currentSite])
 </aside>
 

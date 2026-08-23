@@ -25,6 +25,47 @@ class SiteDashboardTest extends TestCase
         $response->assertSee('Visitors');
         $response->assertSee('Tracking snippet');
         $response->assertSee('Top pages');
+        $response->assertSee('Last 7 days');
+        $response->assertSee('Yesterday');
+        $response->assertSee('This month');
+        $response->assertSee('All pages');
+        $response->assertSee('UTM source');
+    }
+
+    public function test_dashboard_can_filter_traffic_by_path(): void
+    {
+        $user = User::factory()->create();
+        $site = Site::factory()->for($user)->create();
+        Event::factory()->for($site)->count(3)->create(['pathname' => '/', 'occurred_at' => now()]);
+        Event::factory()->for($site)->create(['pathname' => '/pricing', 'occurred_at' => now()]);
+
+        $response = $this->actingAs($user)->get(route('sites.show', [$site, 'path' => '/pricing']));
+
+        $response->assertOk();
+        $response->assertSee('Clear traffic filters');
+        $this->assertEquals(1, $response->viewData('overview')['pageviews']);
+        $this->assertEquals(1, $response->viewData('overview')['visitors']);
+    }
+
+    public function test_dashboard_supports_yesterday_and_custom_ranges(): void
+    {
+        $user = User::factory()->create();
+        $site = Site::factory()->for($user)->create();
+
+        $this->actingAs($user)
+            ->get(route('sites.show', [$site, 'range' => 'yesterday']))
+            ->assertOk()
+            ->assertSee('Yesterday');
+
+        $this->actingAs($user)
+            ->get(route('sites.show', [
+                $site,
+                'range' => 'custom',
+                'from' => now()->subDays(3)->toDateString(),
+                'to' => now()->toDateString(),
+            ]))
+            ->assertOk()
+            ->assertSee('Apply dates');
     }
 
     public function test_owner_sees_site_cards_on_the_index(): void

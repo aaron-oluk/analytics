@@ -13,7 +13,12 @@
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>
     <body class="min-h-screen bg-zinc-50 font-sans antialiased text-zinc-900">
-        <div x-data="{ sidebarOpen: false }" @keydown.escape.window="sidebarOpen = false" class="min-h-screen lg:ps-64">
+        <div
+            x-data="shell"
+            @keydown.escape.window="sidebarOpen = false"
+            class="min-h-screen transition-[padding] duration-200"
+            :class="sidebarExpanded ? 'lg:ps-64' : 'lg:ps-16'"
+        >
             @include('layouts.sidebar')
             @include('layouts.navbar')
 

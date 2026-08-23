@@ -1,4 +1,4 @@
-@props(['title', 'icon' => 'bx-bar-chart-alt-2', 'rows'])
+@props(['title', 'icon' => 'bx-bar-chart-alt-2', 'rows', 'filterUrl' => null, 'filterKey' => null])
 
 @php
     $max = max(1, (int) collect($rows)->max('visitors'));
@@ -24,7 +24,13 @@
                         style="width: {{ round(($row->visitors / $max) * 100) }}%"
                     ></div>
                     <div class="relative flex items-center justify-between gap-3 px-3 py-2 text-sm">
-                        <span class="truncate font-medium text-zinc-700" title="{{ $row->value }}">{{ $row->value }}</span>
+                        @if ($filterUrl && $filterKey)
+                            <a href="{{ $filterUrl([$filterKey => $row->value]) }}" class="truncate font-medium text-zinc-700 hover:text-teal-800" title="Filter by {{ $row->value }}">
+                                {{ $row->value }}
+                            </a>
+                        @else
+                            <span class="truncate font-medium text-zinc-700" title="{{ $row->value }}">{{ $row->value }}</span>
+                        @endif
                         <span class="shrink-0 tabular-nums text-zinc-500">{{ number_format($row->visitors) }}</span>
                     </div>
                 </li>

@@ -28,7 +28,7 @@
 
     <button
         type="button"
-        {{ $attributes->merge(['class' => 'w-full flex items-center justify-between border border-zinc-300 focus:border-teal-600 focus:ring-teal-600 rounded-xl shadow-sm px-3 py-2 text-left text-sm bg-white']) }}
+        {{ $attributes->merge(['class' => 'w-full flex items-center justify-between border border-zinc-300 focus:border-teal-600 focus:ring-teal-600 rounded-lg shadow-sm px-3 py-2 text-left text-sm bg-white']) }}
         @click="open = !open; query = ''; $nextTick(() => $refs.search.focus())"
         :aria-expanded="open"
         aria-haspopup="listbox"
@@ -49,7 +49,7 @@
                 x-model="query"
                 x-on:keydown.escape="open = false"
                 placeholder="Search timezones..."
-                class="w-full border-zinc-300 focus:border-teal-600 focus:ring-teal-600 rounded-xl text-sm"
+                class="w-full border-zinc-300 focus:border-teal-600 focus:ring-teal-600 rounded-lg text-sm"
             >
         </div>
 

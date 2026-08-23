@@ -9,7 +9,7 @@
             </div>
             <a
                 href="{{ route('sites.create') }}"
-                class="inline-flex items-center gap-1.5 rounded-xl bg-zinc-900 px-3.5 py-2 text-sm font-medium text-white transition hover:bg-zinc-800"
+                class="inline-flex items-center gap-1.5 rounded-lg bg-zinc-900 px-3.5 py-2 text-sm font-medium text-white transition hover:bg-zinc-800"
             >
                 <i class="bx bx-plus text-lg"></i>
                 Add site
@@ -20,7 +20,7 @@
 
         @if ($sites->isEmpty())
             <x-card class="py-16 text-center">
-                <div class="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-teal-50 text-teal-700">
+                <div class="mx-auto flex h-12 w-12 items-center justify-center rounded-lg bg-teal-50 text-teal-700">
                     <i class="bx bx-plus-circle text-2xl"></i>
                 </div>
                 <h2 class="mt-4 text-base font-semibold text-zinc-900">No sites yet</h2>
@@ -29,7 +29,7 @@
                 </p>
                 <a
                     href="{{ route('sites.create') }}"
-                    class="mt-6 inline-flex items-center gap-1.5 rounded-xl bg-zinc-900 px-3.5 py-2 text-sm font-medium text-white hover:bg-zinc-800"
+                    class="mt-6 inline-flex items-center gap-1.5 rounded-lg bg-zinc-900 px-3.5 py-2 text-sm font-medium text-white hover:bg-zinc-800"
                 >
                     Add your first site
                 </a>
@@ -41,7 +41,7 @@
                         <x-card class="h-full transition group-hover:ring-zinc-300">
                             <div class="flex items-start justify-between gap-3">
                                 <div class="min-w-0">
-                                    <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-teal-50 text-teal-700">
+                                    <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-teal-50 text-teal-700">
                                         <i class="bx bx-globe text-xl"></i>
                                     </div>
                                     <h2 class="mt-4 truncate text-base font-semibold text-zinc-900">{{ $site->name }}</h2>
