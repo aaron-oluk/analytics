@@ -12,7 +12,7 @@ Visitor loads a tracked page
         ▼
 public/tracker.js  ──POST /api/collect──►  CollectController
         │                                      │
-        │                                      ▼  (queue: analytics)
+        │                                      ▼  (deferred, after 204)
         │                                   RecordHit
         │                                      │
         │                                      ▼
@@ -75,7 +75,7 @@ The script origin is derived from its own `src`, so the same file works in local
 
 `UpdateHitDuration` recomputes the same visitor hash and writes `duration_seconds` onto the latest matching pageview. The browser never holds a server-issued id.
 
-Queue workers must be running in production (`php artisan queue:listen` or Horizon). `composer run dev` starts the listener for you.
+The default queue is Laravel’s `deferred` driver: `/api/collect` returns `204`, then the job runs in the same request after the response is sent. No `queue:work` process is required after deploy. Switch `QUEUE_CONNECTION` to `database` (and run a worker on `--queue=analytics`) only if you want ingest fully off the PHP-FPM process.
 
 ### 5. The dashboard merges rollups with today
 
@@ -133,18 +133,19 @@ See `config/analytics.php` and `.env`:
 
 | Key | Default | Meaning |
 | --- | --- | --- |
-| `ANALYTICS_QUEUE` | `analytics` | Queue name for ingest jobs |
+| `QUEUE_CONNECTION` | `deferred` | Runs ingest after the HTTP response; no worker |
+| `ANALYTICS_QUEUE` | `analytics` | Queue name only if you switch to `database` / `redis` |
 | `ANALYTICS_GEOIP_DRIVER` | `null` | `null` skips country; swap in a MaxMind driver later |
 | `session_timeout_minutes` | `30` | Inactivity before a new session |
 | `raw_event_retention_days` | `90` | How long raw hits are kept after rollup |
 
-The HTTP app uses the `database` queue by default (`.env.example`). Tests force `sync`.
+Tests force `sync` so jobs run inline.
 
 ## Local setup
 
 ```bash
 composer setup          # install, .env, key, migrate, npm build
-composer run dev        # serve + queue + logs + vite
+composer run dev        # serve + logs + vite
 ```
 
 Or the usual Laravel steps: copy `.env.example`, `php artisan key:generate`, `php artisan migrate`, `npm install && npm run dev`.
@@ -154,8 +155,6 @@ Default DB is SQLite. Seed a test user with `php artisan db:seed` (`test@example
 ```bash
 composer test           # phpunit
 ```
-
-For ingest to persist hits while you click around, keep the queue worker from `composer run dev` running.
 
 ## Layout of the interesting code
 

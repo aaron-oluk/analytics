@@ -16,9 +16,9 @@ return [
     'raw_event_retention_days' => 90,
 
     /*
-     * Queue used for the ingestion pipeline. Kept separate from the default
-     * queue so a burst of traffic on one tracked site can't delay other
-     * application jobs.
+     * Queue name used when QUEUE_CONNECTION is database or redis.
+     * The default deferred driver ignores this and runs jobs after
+     * the HTTP response in the same process.
      */
     'queue' => env('ANALYTICS_QUEUE', 'analytics'),
 

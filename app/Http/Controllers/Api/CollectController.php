@@ -15,9 +15,9 @@ use Illuminate\Support\Facades\Cache;
 /**
  * Public, unauthenticated ingestion endpoint hit by the tracking snippet on
  * every tracked site. Kept intentionally trivial: look up the site,
- * hand off enrichment to a queued job, and return immediately. This is
- * what lets a single site's traffic spike get absorbed by the queue
- * instead of piling up web workers.
+ * hand off enrichment to a deferred job, and return immediately. The
+ * default deferred queue runs RecordHit after the 204 is sent, so
+ * production does not need a separate queue worker.
  */
 class CollectController extends Controller
 {
