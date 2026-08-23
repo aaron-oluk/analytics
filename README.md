@@ -45,8 +45,8 @@ Paste that before `</body>` on every page you want to track.
 
 `public/tracker.js` is a small IIFE with no cookies and no fingerprinting library.
 
-- Honors `navigator.doNotTrack === '1'` and bails out.
 - POSTs `{ domain, pathname, referrer, utm_* }` to `/api/collect`.
+- Resolves its own script tag even when `document.currentScript` is null (common with `defer` in Firefox). Does not honor Do Not Track, so Firefox still records.
 - On tab hide, page unload, or an in-app route change, sends time-on-page to `/api/collect/duration` via `sendBeacon`.
 - Treats `pushState` / `replaceState` / `popstate` as new pageviews so SPAs work.
 
@@ -67,8 +67,8 @@ The script origin is derived from its own `src`, so the same file works in local
 `RecordHit` (queue name `analytics`):
 
 1. Drops crawlers (`CrawlerDetect`).
-2. Builds an anonymous visitor hash from IP + user-agent + a **daily-rotating salt** (`VisitorIdentity`). Same person, next day → different hash, so days cannot be joined.
-3. Drops a repeat hit from the same visitor on the same pathname inside `pageview_dedupe_seconds` (30). Refreshes and double-fired snippets do not create extra pageviews.
+2. Builds an anonymous visitor hash from IP + a **daily-rotating salt** (`VisitorIdentity`). Chrome and Firefox on the same IP are one visitor. Same person, next day → different hash, so days cannot be joined.
+3. Drops a repeat hit from the same IP + browser + pathname inside `pageview_dedupe_seconds` (30). A second browser on that IP still records a pageview.
 4. Continues or starts a session (default 30 minutes of inactivity).
 5. Parses device / browser / OS (`jenssegers/agent`).
 6. Optionally resolves country via `GeoLocator` (default driver is `null`, so country is empty until you wire MaxMind).
@@ -98,7 +98,7 @@ No cookies, no localStorage, no consent banner by design.
 
 | Stored | Not stored |
 | --- | --- |
-| Daily-rotating MD5 of salt + IP + UA | Raw IP |
+| Daily-rotating MD5 of salt + IP | Raw IP |
 | Pathname, external referrer host, UTM | Full referrer URL after ingest |
 | Device / browser / OS | Cross-day visitor identity |
 | Optional ISO country code | Names, emails, user ids of visitors |

@@ -103,6 +103,33 @@ class CollectEndpointTest extends TestCase
         $this->assertSame(42, Event::first()->duration_seconds);
     }
 
+    public function test_duration_ping_updates_the_matching_browser_event(): void
+    {
+        Site::factory()->create(['domain' => 'example.com']);
+
+        $chrome = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36';
+        $firefox = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:128.0) Gecko/20100101 Firefox/128.0';
+
+        $this->withHeaders(['User-Agent' => $chrome])
+            ->postJson('/api/collect', ['domain' => 'example.com', 'pathname' => '/'])
+            ->assertNoContent();
+
+        $this->withHeaders(['User-Agent' => $firefox])
+            ->postJson('/api/collect', ['domain' => 'example.com', 'pathname' => '/'])
+            ->assertNoContent();
+
+        $this->withHeaders(['User-Agent' => $chrome])
+            ->postJson('/api/collect/duration', [
+                'domain' => 'example.com',
+                'pathname' => '/',
+                'duration' => 12,
+            ])->assertNoContent();
+
+        $events = Event::orderBy('id')->get();
+        $this->assertSame(12, $events[0]->duration_seconds);
+        $this->assertNull($events[1]->duration_seconds);
+    }
+
     public function test_it_ignores_a_repeat_hit_from_the_same_device_and_path(): void
     {
         Site::factory()->create(['domain' => 'example.com']);
@@ -126,20 +153,49 @@ class CollectEndpointTest extends TestCase
         $this->assertDatabaseCount('events', 2);
     }
 
-    public function test_a_different_device_on_the_same_path_is_recorded(): void
+    public function test_same_ip_treats_another_browser_as_the_same_visitor(): void
     {
         Site::factory()->create(['domain' => 'example.com']);
 
-        $this->withHeaders(['User-Agent' => 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) Firefox/128.0'])
-            ->postJson('/api/collect', ['domain' => 'example.com', 'pathname' => '/pricing'])
+        $this->withHeaders([
+            'User-Agent' => 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36',
+        ])->postJson('/api/collect', ['domain' => 'example.com', 'pathname' => '/'])->assertNoContent();
+
+        $this->withHeaders([
+            'User-Agent' => 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:128.0) Gecko/20100101 Firefox/128.0',
+        ])->postJson('/api/collect', ['domain' => 'example.com', 'pathname' => '/'])->assertNoContent();
+
+        $events = Event::orderBy('id')->get();
+
+        $this->assertCount(2, $events);
+        $this->assertSame($events[0]->visitor_hash, $events[1]->visitor_hash);
+        $this->assertSame($events[0]->session_id, $events[1]->session_id);
+        $this->assertTrue($events[0]->is_new_visitor);
+        $this->assertFalse($events[1]->is_new_visitor);
+        $this->assertTrue($events[0]->is_new_session);
+        $this->assertFalse($events[1]->is_new_session);
+        $this->assertSame('Chrome', $events[0]->browser);
+        $this->assertSame('Firefox', $events[1]->browser);
+    }
+
+    public function test_a_different_ip_is_a_different_visitor(): void
+    {
+        Site::factory()->create(['domain' => 'example.com']);
+
+        $this->withServerVariables(['REMOTE_ADDR' => '203.0.113.10'])
+            ->postJson('/api/collect', ['domain' => 'example.com', 'pathname' => '/'])
             ->assertNoContent();
 
-        $this->withHeaders(['User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/128.0.0.0'])
-            ->postJson('/api/collect', ['domain' => 'example.com', 'pathname' => '/pricing'])
+        $this->withServerVariables(['REMOTE_ADDR' => '203.0.113.20'])
+            ->postJson('/api/collect', ['domain' => 'example.com', 'pathname' => '/'])
             ->assertNoContent();
 
-        $this->assertDatabaseCount('events', 2);
-        $this->assertNotSame(Event::oldest('id')->first()->visitor_hash, Event::latest('id')->first()->visitor_hash);
+        $events = Event::orderBy('id')->get();
+
+        $this->assertCount(2, $events);
+        $this->assertNotSame($events[0]->visitor_hash, $events[1]->visitor_hash);
+        $this->assertTrue($events[0]->is_new_visitor);
+        $this->assertTrue($events[1]->is_new_visitor);
     }
 
     public function test_bot_traffic_is_dropped(): void

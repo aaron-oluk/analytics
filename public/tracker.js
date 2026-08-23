@@ -1,9 +1,27 @@
 (function () {
   'use strict';
 
-  if (navigator.doNotTrack === '1') return;
+  function trackerScript() {
+    if (document.currentScript) {
+      return document.currentScript;
+    }
 
-  var script = document.currentScript;
+    var scripts = document.getElementsByTagName('script');
+    for (var i = 0; i < scripts.length; i++) {
+      var src = scripts[i].src || '';
+      if (src.indexOf('tracker.js') !== -1) {
+        return scripts[i];
+      }
+    }
+
+    return null;
+  }
+
+  var script = trackerScript();
+  if (!script || !script.src) {
+    return;
+  }
+
   var apiBase = script.src.replace(/\/tracker\.js.*$/, '');
   var domain = script.getAttribute('data-site') || location.hostname;
   var pageStart = Date.now();

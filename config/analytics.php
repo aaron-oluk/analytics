@@ -8,10 +8,9 @@ return [
     'session_timeout_minutes' => 30,
 
     /*
-     * Same visitor (daily-salted hash of IP + user-agent) hitting the
-     * same pathname again inside this window is ignored. Stops refresh
-     * loops, double-mounted snippets, and prefetch noise from inflating
-     * pageviews. Set to 0 to disable.
+     * Same IP + browser hitting the same pathname again inside this
+     * window is ignored. Stops refresh loops from inflating pageviews.
+     * A different browser on that IP still records. Set to 0 to disable.
      */
     'pageview_dedupe_seconds' => (int) env('ANALYTICS_PAGEVIEW_DEDUPE_SECONDS', 30),
 

@@ -7,14 +7,14 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
 
 /**
- * Turns an (IP, User-Agent) pair into an anonymous, non-reversible visitor
- * fingerprint, and tracks session continuity — all without cookies or any
- * persisted PII. This is the piece that makes the tracker cookie-free and
- * GDPR/ePrivacy "no consent banner needed" friendly.
+ * Turns an IP into an anonymous, non-reversible visitor fingerprint, and
+ * tracks session continuity — all without cookies or any persisted PII.
  *
  * - The fingerprint is salted with a value that rotates every day
  *   (Site::currentSalt()), so the same person cannot be correlated across
  *   days even though it's the same hash within a single day.
+ * - Browser and user-agent are not part of the visitor id. Chrome and
+ *   Firefox on the same IP are one visitor and share a session.
  * - Session and "new today" state is kept in the cache (not the database)
  *   with a short TTL, since it's disposable coordination state rather than
  *   analytics data of record.
@@ -27,13 +27,13 @@ class VisitorIdentity
 
     public function hash(): string
     {
-        return md5(implode('|', [$this->site->currentSalt(), $this->ip, $this->userAgent]));
+        return md5(implode('|', [$this->site->currentSalt(), $this->ip]));
     }
 
     /**
-     * Claim the right to record a pageview for this visitor + path.
-     * Returns false when the same device already hit this path inside
-     * the dedupe window, so ingest can drop the duplicate.
+     * Claim the right to record a pageview for this IP + browser + path.
+     * A refresh in the same browser is ignored; a different browser on
+     * the same IP still records so browser breakdowns stay accurate.
      */
     public function claimPageview(string $pathname): bool
     {
@@ -43,7 +43,8 @@ class VisitorIdentity
             return true;
         }
 
-        $key = "analytics:pageview:{$this->site->id}:{$this->hash()}:{$pathname}";
+        $browser = md5($this->userAgent);
+        $key = "analytics:pageview:{$this->site->id}:{$this->hash()}:{$browser}:{$pathname}";
 
         return Cache::add($key, true, now()->addSeconds($seconds));
     }

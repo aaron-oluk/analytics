@@ -7,6 +7,7 @@ use App\Models\Site;
 use App\Services\Analytics\VisitorIdentity;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
+use Jenssegers\Agent\Agent;
 
 /**
  * Sent via navigator.sendBeacon when a visitor leaves the page, so we can
@@ -39,10 +40,15 @@ class UpdateHitDuration implements ShouldQueue
         $hash = (new VisitorIdentity($site, $this->ip, $this->userAgent))->hash();
         $pathname = VisitorIdentity::normalizePathname($this->pathname);
 
+        $agent = new Agent;
+        $agent->setUserAgent($this->userAgent);
+        $browser = $agent->browser() ?: 'Other';
+
         $event = Event::query()
             ->where('site_id', $site->id)
             ->where('visitor_hash', $hash)
             ->where('pathname', $pathname)
+            ->where('browser', $browser)
             ->whereNull('duration_seconds')
             ->latest('occurred_at')
             ->first();
