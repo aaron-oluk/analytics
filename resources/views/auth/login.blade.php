@@ -1,4 +1,6 @@
 <x-guest-layout>
+    <h1 class="text-lg font-semibold text-gray-900 mb-4">{{ __('Log in to your account') }}</h1>
+
     <!-- Session Status -->
     <x-auth-session-status class="mb-4" :status="session('status')" />
 

@@ -1,4 +1,6 @@
 <x-guest-layout>
+    <h1 class="text-lg font-semibold text-gray-900 mb-4">{{ __('Create your account') }}</h1>
+
     <form method="POST" action="{{ route('register') }}">
         @csrf
 

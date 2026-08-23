@@ -16,11 +16,10 @@
     </head>
     <body class="font-sans text-gray-900 antialiased">
         <div class="min-h-screen flex flex-col sm:justify-center items-center pt-6 sm:pt-0 bg-gray-100">
-            <div>
-                <a href="/">
-                    <x-application-logo class="w-20 h-20 fill-current text-gray-500" />
-                </a>
-            </div>
+            <a href="/" class="flex items-center gap-2">
+                <x-application-logo class="w-8 h-8 fill-current text-indigo-600" />
+                <span class="font-semibold text-lg text-gray-900">{{ config('app.name') }}</span>
+            </a>
 
             <div class="w-full sm:max-w-md mt-6 px-6 py-4 bg-white shadow-md overflow-hidden sm:rounded-lg">
                 {{ $slot }}
