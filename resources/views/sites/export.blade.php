@@ -125,9 +125,9 @@
                                 <td class="max-w-[16rem] truncate px-5 py-2.5 font-medium" title="{{ $event->pathname }}">{{ $event->pathname }}</td>
                                 <td class="max-w-[12rem] truncate px-5 py-2.5 text-zinc-500">{{ $event->referrer_domain ?: 'Direct' }}</td>
                                 <td class="whitespace-nowrap px-5 py-2.5">{{ \App\Services\Analytics\CountryCode::name($event->country_code) }}</td>
-                                <td class="whitespace-nowrap px-5 py-2.5 capitalize text-zinc-500">{{ $event->device_type ?: '—' }}</td>
-                                <td class="whitespace-nowrap px-5 py-2.5 text-zinc-500">{{ $event->browser ?: '—' }}</td>
-                                <td class="whitespace-nowrap px-5 py-2.5 tabular-nums text-zinc-500">{{ $event->duration_seconds !== null ? gmdate('i:s', $event->duration_seconds) : '—' }}</td>
+                                <td class="whitespace-nowrap px-5 py-2.5 capitalize text-zinc-500">{{ $event->device_type ?: '-' }}</td>
+                                <td class="whitespace-nowrap px-5 py-2.5 text-zinc-500">{{ $event->browser ?: '-' }}</td>
+                                <td class="whitespace-nowrap px-5 py-2.5 tabular-nums text-zinc-500">{{ $event->duration_seconds !== null ? gmdate('i:s', $event->duration_seconds) : '-' }}</td>
                             </tr>
                         @empty
                             <tr>
