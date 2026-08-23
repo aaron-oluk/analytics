@@ -8,7 +8,9 @@ use App\Http\Requests\CollectHitRequest;
 use App\Jobs\RecordHit;
 use App\Jobs\UpdateHitDuration;
 use App\Models\Site;
+use App\Services\Analytics\CountryCode;
 use Carbon\CarbonImmutable;
+use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Cache;
 
@@ -40,6 +42,7 @@ class CollectController extends Controller
             utmCampaign: $request->input('utm_campaign'),
             durationSeconds: null,
             occurredAt: CarbonImmutable::now(),
+            countryCode: $this->requestCountry($request),
         );
 
         return response()->noContent();
@@ -91,5 +94,10 @@ class CollectController extends Controller
         $host = $host ? preg_replace('#^www\.#', '', strtolower($host)) : null;
 
         return ($host && $host !== $siteDomain) ? $host : null;
+    }
+
+    private function requestCountry(Request $request): ?string
+    {
+        return CountryCode::normalize($request->header('CF-IPCountry'));
     }
 }

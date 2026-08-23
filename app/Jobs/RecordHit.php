@@ -4,6 +4,7 @@ namespace App\Jobs;
 
 use App\Models\Event;
 use App\Models\Site;
+use App\Services\Analytics\CountryCode;
 use App\Services\Analytics\GeoLocator;
 use App\Services\Analytics\VisitorIdentity;
 use Carbon\CarbonImmutable;
@@ -33,6 +34,7 @@ class RecordHit implements ShouldQueue
         private readonly ?string $utmCampaign,
         private readonly ?int $durationSeconds,
         private readonly CarbonImmutable $occurredAt,
+        private readonly ?string $countryCode = null,
     ) {
         $this->onQueue(config('analytics.queue'));
     }
@@ -70,7 +72,7 @@ class RecordHit implements ShouldQueue
             'utm_source' => $this->utmSource,
             'utm_medium' => $this->utmMedium,
             'utm_campaign' => $this->utmCampaign,
-            'country_code' => $geoLocator->countryFor($this->ip),
+            'country_code' => CountryCode::normalize($this->countryCode) ?? $geoLocator->countryFor($this->ip),
             'device_type' => match (true) {
                 $agent->isTablet() => 'tablet',
                 $agent->isMobile() => 'mobile',

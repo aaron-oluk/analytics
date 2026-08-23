@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\Event;
 use App\Models\Site;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
 
 class CollectEndpointTest extends TestCase
@@ -196,6 +197,35 @@ class CollectEndpointTest extends TestCase
         $this->assertNotSame($events[0]->visitor_hash, $events[1]->visitor_hash);
         $this->assertTrue($events[0]->is_new_visitor);
         $this->assertTrue($events[1]->is_new_visitor);
+    }
+
+    public function test_it_records_country_from_the_cloudflare_header(): void
+    {
+        Site::factory()->create(['domain' => 'example.com']);
+
+        $this->withHeaders(['CF-IPCountry' => 'UG'])
+            ->postJson('/api/collect', ['domain' => 'example.com', 'pathname' => '/'])
+            ->assertNoContent();
+
+        $this->assertSame('UG', Event::first()->country_code);
+    }
+
+    public function test_it_looks_up_country_for_a_public_ip(): void
+    {
+        config(['analytics.geoip_driver' => 'http']);
+
+        Http::fake([
+            'get.geojs.io/*' => Http::response(['country' => 'KE'], 200),
+        ]);
+
+        Site::factory()->create(['domain' => 'example.com']);
+
+        $this->withServerVariables(['REMOTE_ADDR' => '102.85.1.10'])
+            ->postJson('/api/collect', ['domain' => 'example.com', 'pathname' => '/'])
+            ->assertNoContent();
+
+        $this->assertSame('KE', Event::first()->country_code);
+        Http::assertSentCount(1);
     }
 
     public function test_bot_traffic_is_dropped(): void

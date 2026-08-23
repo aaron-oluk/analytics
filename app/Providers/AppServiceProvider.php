@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use App\Services\Analytics\GeoLocator;
+use App\Services\Analytics\HttpGeoLocator;
 use App\Services\Analytics\NullGeoLocator;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Support\Facades\RateLimiter;
@@ -15,10 +16,11 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        $this->app->bind(GeoLocator::class, match (config('analytics.geoip_driver')) {
-            // Add 'maxmind' => MaxMindGeoLocator::class here once a
-            // GeoLite2 database is wired up; ingestion code never changes.
-            default => NullGeoLocator::class,
+        $this->app->bind(GeoLocator::class, function ($app) {
+            return match ($app['config']->get('analytics.geoip_driver')) {
+                'null' => $app->make(NullGeoLocator::class),
+                default => $app->make(HttpGeoLocator::class),
+            };
         });
     }
 

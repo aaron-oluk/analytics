@@ -30,10 +30,11 @@ return [
     'queue' => env('ANALYTICS_QUEUE', 'analytics'),
 
     /*
-     * GeoIP resolution driver. 'null' ships with no external dependency and
-     * simply skips country attribution. Swap in a 'maxmind' driver (see
-     * App\Services\Analytics\GeoLocator) once a GeoLite2 database is
-     * available, without touching ingestion code.
+     * GeoIP driver. 'http' looks up public IPs via geojs.io (cached).
+     * Cloudflare CF-IPCountry is applied first when the header is present.
+     * Set to 'null' to skip lookups.
      */
-    'geoip_driver' => env('ANALYTICS_GEOIP_DRIVER', 'null'),
+    'geoip_driver' => env('ANALYTICS_GEOIP_DRIVER', 'http'),
+
+    'geoip_cache_days' => (int) env('ANALYTICS_GEOIP_CACHE_DAYS', 30),
 ];

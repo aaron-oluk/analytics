@@ -71,7 +71,7 @@ The script origin is derived from its own `src`, so the same file works in local
 3. Drops a repeat hit from the same IP + browser + pathname inside `pageview_dedupe_seconds` (30). A second browser on that IP still records a pageview.
 4. Continues or starts a session (default 30 minutes of inactivity).
 5. Parses device / browser / OS (`jenssegers/agent`).
-6. Optionally resolves country via `GeoLocator` (default driver is `null`, so country is empty until you wire MaxMind).
+6. Resolves country from the Cloudflare `CF-IPCountry` header when present, otherwise via `HttpGeoLocator` (geojs.io, cached 30 days). Private IPs are skipped.
 7. Inserts one `events` row.
 
 `UpdateHitDuration` recomputes the same visitor hash and writes `duration_seconds` onto the latest matching pageview. The browser never holds a server-issued id.
@@ -136,7 +136,7 @@ See `config/analytics.php` and `.env`:
 | --- | --- | --- |
 | `QUEUE_CONNECTION` | `sync` | Unused for ingest (`dispatchSync`); safe default for other jobs |
 | `ANALYTICS_QUEUE` | `analytics` | Queue name only if you switch to `database` / `redis` |
-| `ANALYTICS_GEOIP_DRIVER` | `null` | `null` skips country; swap in a MaxMind driver later |
+| `ANALYTICS_GEOIP_DRIVER` | `http` | `http` looks up country; `null` skips |
 | `ANALYTICS_PAGEVIEW_DEDUPE_SECONDS` | `30` | Ignore same visitor + path inside this window |
 | `session_timeout_minutes` | `30` | Inactivity before a new session |
 | `raw_event_retention_days` | `90` | How long raw hits are kept after rollup |
