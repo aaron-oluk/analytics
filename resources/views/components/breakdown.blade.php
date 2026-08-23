@@ -18,6 +18,11 @@
     @else
         <ul class="space-y-1.5">
             @foreach ($rows as $row)
+                @php
+                    $label = $filterKey === 'country'
+                        ? \App\Services\Analytics\CountryCode::name($row->value)
+                        : $row->value;
+                @endphp
                 <li class="relative overflow-hidden rounded-lg">
                     <div
                         class="absolute inset-y-0 start-0 rounded-lg bg-teal-50"
@@ -25,11 +30,11 @@
                     ></div>
                     <div class="relative flex items-center justify-between gap-3 px-3 py-2 text-sm">
                         @if ($filterUrl && $filterKey)
-                            <a href="{{ $filterUrl([$filterKey => $row->value]) }}" class="truncate font-medium text-zinc-700 hover:text-teal-800" title="Filter by {{ $row->value }}">
-                                {{ $row->value }}
+                            <a href="{{ $filterUrl([$filterKey => $row->value]) }}" class="truncate font-medium text-zinc-700 hover:text-teal-800" title="Filter by {{ $label }}">
+                                {{ $label }}
                             </a>
                         @else
-                            <span class="truncate font-medium text-zinc-700" title="{{ $row->value }}">{{ $row->value }}</span>
+                            <span class="truncate font-medium text-zinc-700" title="{{ $label }}">{{ $label }}</span>
                         @endif
                         <span class="shrink-0 tabular-nums text-zinc-500">{{ number_format($row->visitors) }}</span>
                     </div>

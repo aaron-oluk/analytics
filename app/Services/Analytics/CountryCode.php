@@ -17,4 +17,23 @@ class CountryCode
 
         return $code;
     }
+
+    public static function name(?string $code): string
+    {
+        $normalized = self::normalize($code);
+
+        if (! $normalized) {
+            return 'Unknown';
+        }
+
+        if (class_exists(\Locale::class)) {
+            $name = \Locale::getDisplayRegion('-'.$normalized, 'en');
+
+            if (is_string($name) && $name !== '' && strcasecmp($name, $normalized) !== 0) {
+                return $name;
+            }
+        }
+
+        return $normalized;
+    }
 }

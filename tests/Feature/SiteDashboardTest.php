@@ -12,6 +12,22 @@ class SiteDashboardTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_dashboard_shows_country_names(): void
+    {
+        $user = User::factory()->create();
+        $site = Site::factory()->for($user)->create();
+        Event::factory()->for($site)->create([
+            'country_code' => 'UG',
+            'occurred_at' => now(),
+        ]);
+
+        $this->actingAs($user)
+            ->get(route('sites.show', $site))
+            ->assertOk()
+            ->assertSee('Uganda')
+            ->assertDontSee('>UG<', false);
+    }
+
     public function test_owner_can_view_their_site_dashboard(): void
     {
         $user = User::factory()->create();

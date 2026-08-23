@@ -94,7 +94,7 @@
                         <option value="{{ $filterUrl([$key => '']) }}" @selected(! isset($filters[$key]))>{{ $meta['empty'] }}</option>
                         @foreach ($filterOptions[$key] as $option)
                             <option value="{{ $filterUrl([$key => $option->value]) }}" @selected(($filters[$key] ?? null) === $option->value)>
-                                {{ $option->value }} ({{ number_format($option->visitors) }})
+                                {{ $key === 'country' ? \App\Services\Analytics\CountryCode::name($option->value) : $option->value }} ({{ number_format($option->visitors) }})
                             </option>
                         @endforeach
                     </select>
