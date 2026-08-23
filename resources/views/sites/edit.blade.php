@@ -1,45 +1,47 @@
 <x-app-layout>
-    <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 leading-tight">Edit {{ $site->name }}</h2>
-    </x-slot>
+    <x-slot name="title">Settings · {{ $site->name }}</x-slot>
 
-    <div class="py-12">
-        <div class="max-w-2xl mx-auto sm:px-6 lg:px-8 space-y-6">
-            <div class="bg-white p-6 shadow-sm sm:rounded-lg">
-                <form method="POST" action="{{ route('sites.update', $site) }}" class="space-y-6">
-                    @csrf
-                    @method('PUT')
-
-                    <div>
-                        <x-input-label for="name" value="Site name" />
-                        <x-text-input id="name" name="name" type="text" class="mt-1 block w-full" value="{{ old('name', $site->name) }}" required />
-                        <x-input-error :messages="$errors->get('name')" class="mt-2" />
-                    </div>
-
-                    <div>
-                        <x-input-label for="timezone" value="Timezone" />
-                        <select id="timezone" name="timezone" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
-                            @foreach (timezone_identifiers_list() as $tz)
-                                <option value="{{ $tz }}" @selected(old('timezone', $site->timezone) === $tz)>{{ $tz }}</option>
-                            @endforeach
-                        </select>
-                        <x-input-error :messages="$errors->get('timezone')" class="mt-2" />
-                    </div>
-
-                    <div class="flex justify-end">
-                        <x-primary-button>Save</x-primary-button>
-                    </div>
-                </form>
-            </div>
-
-            <div class="bg-white p-6 shadow-sm sm:rounded-lg">
-                <h3 class="font-semibold text-red-700 mb-4">Danger zone</h3>
-                <form method="POST" action="{{ route('sites.destroy', $site) }}" onsubmit="return confirm('Delete this site and all of its analytics data? This cannot be undone.')">
-                    @csrf
-                    @method('DELETE')
-                    <x-danger-button>Delete Site</x-danger-button>
-                </form>
-            </div>
+    <x-page width="max-w-xl">
+        <div>
+            <a href="{{ route('sites.show', $site) }}" class="inline-flex items-center gap-1 text-sm text-zinc-500 hover:text-zinc-900">
+                <i class="bx bx-left-arrow-alt text-base"></i>
+                {{ $site->name }}
+            </a>
+            <h1 class="mt-3 text-2xl font-semibold tracking-tight text-zinc-900">Site settings</h1>
+            <p class="mt-1 text-sm text-zinc-500">{{ $site->domain }}</p>
         </div>
-    </div>
+
+        <x-card>
+            <form method="POST" action="{{ route('sites.update', $site) }}" class="space-y-6">
+                @csrf
+                @method('PUT')
+
+                <div>
+                    <x-input-label for="name" value="Site name" />
+                    <x-text-input id="name" name="name" type="text" class="mt-1 block w-full" value="{{ old('name', $site->name) }}" required />
+                    <x-input-error :messages="$errors->get('name')" class="mt-2" />
+                </div>
+
+                <div>
+                    <x-input-label for="timezone" value="Timezone" />
+                    <x-timezone-select id="timezone" name="timezone" :selected="old('timezone', $site->timezone)" class="mt-1" />
+                    <x-input-error :messages="$errors->get('timezone')" class="mt-2" />
+                </div>
+
+                <div class="flex justify-end">
+                    <x-primary-button>Save</x-primary-button>
+                </div>
+            </form>
+        </x-card>
+
+        <x-card class="ring-red-100">
+            <h2 class="text-sm font-semibold text-red-700">Danger zone</h2>
+            <p class="mt-1 text-sm text-zinc-500">Deletes this site and every event, rollup, and breakdown attached to it.</p>
+            <form method="POST" action="{{ route('sites.destroy', $site) }}" class="mt-4" onsubmit="return confirm('Delete this site and all of its analytics data? This cannot be undone.')">
+                @csrf
+                @method('DELETE')
+                <x-danger-button>Delete site</x-danger-button>
+            </form>
+        </x-card>
+    </x-page>
 </x-app-layout>

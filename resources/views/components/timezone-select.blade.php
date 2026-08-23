@@ -28,7 +28,7 @@
 
     <button
         type="button"
-        {{ $attributes->merge(['class' => 'w-full flex items-center justify-between border border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm px-3 py-2 text-left text-sm bg-white']) }}
+        {{ $attributes->merge(['class' => 'w-full flex items-center justify-between border border-zinc-300 focus:border-teal-600 focus:ring-teal-600 rounded-xl shadow-sm px-3 py-2 text-left text-sm bg-white']) }}
         @click="open = !open; query = ''; $nextTick(() => $refs.search.focus())"
         :aria-expanded="open"
         aria-haspopup="listbox"
@@ -40,16 +40,16 @@
     <div
         x-show="open"
         x-cloak
-        class="absolute z-10 mt-1 w-full bg-white border border-gray-200 rounded-md shadow-lg"
+        class="absolute z-10 mt-1 w-full bg-white border border-zinc-200 rounded-xl shadow-lg"
     >
-        <div class="p-2 border-b border-gray-100">
+        <div class="p-2 border-b border-zinc-100">
             <input
                 type="text"
                 x-ref="search"
                 x-model="query"
                 x-on:keydown.escape="open = false"
                 placeholder="Search timezones..."
-                class="w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md text-sm"
+                class="w-full border-zinc-300 focus:border-teal-600 focus:ring-teal-600 rounded-xl text-sm"
             >
         </div>
 
@@ -59,8 +59,8 @@
                     role="option"
                     @click="choose(tz)"
                     :aria-selected="tz === selected"
-                    class="px-3 py-1.5 cursor-pointer hover:bg-indigo-50"
-                    :class="tz === selected ? 'bg-indigo-50 font-medium' : ''"
+                    class="px-3 py-1.5 cursor-pointer hover:bg-teal-50"
+                    :class="tz === selected ? 'bg-teal-50 font-medium' : ''"
                     x-text="tz"
                 ></li>
             </template>

@@ -13,7 +13,10 @@ class SiteController extends Controller
 {
     public function index(Request $request): View
     {
-        $sites = $request->user()->sites()->latest()->get();
+        $sites = $request->user()->sites()
+            ->withCount(['events as pageviews_today' => fn ($query) => $query->whereDate('occurred_at', today())])
+            ->latest()
+            ->get();
 
         return view('sites.index', compact('sites'));
     }

@@ -1,36 +1,62 @@
 <x-app-layout>
-    <x-slot name="header">
-        <div class="flex justify-between items-center">
-            <h2 class="font-semibold text-xl text-gray-800 leading-tight">Your Sites</h2>
-            <a href="{{ route('sites.create') }}" class="inline-flex items-center px-4 py-2 bg-gray-800 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-gray-700">
-                + Add Site
+    <x-slot name="title">Sites</x-slot>
+
+    <x-page>
+        <div class="flex items-end justify-between gap-4">
+            <div>
+                <h1 class="text-2xl font-semibold tracking-tight text-zinc-900">Sites</h1>
+                <p class="mt-1 text-sm text-zinc-500">Properties you’re collecting analytics for.</p>
+            </div>
+            <a
+                href="{{ route('sites.create') }}"
+                class="inline-flex items-center gap-1.5 rounded-xl bg-zinc-900 px-3.5 py-2 text-sm font-medium text-white transition hover:bg-zinc-800"
+            >
+                <i class="bx bx-plus text-lg"></i>
+                Add site
             </a>
         </div>
-    </x-slot>
 
-    <div class="py-12">
-        <div class="max-w-5xl mx-auto sm:px-6 lg:px-8">
-            @if (session('status'))
-                <div class="mb-4 p-4 bg-green-50 text-green-700 rounded-md text-sm">{{ session('status') }}</div>
-            @endif
+        <x-flash />
 
-            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg divide-y">
-                @forelse ($sites as $site)
-                    <a href="{{ route('sites.show', $site) }}" class="block p-6 hover:bg-gray-50">
-                        <div class="flex justify-between items-center">
-                            <div>
-                                <div class="font-semibold text-gray-900">{{ $site->name }}</div>
-                                <div class="text-sm text-gray-500">{{ $site->domain }}</div>
+        @if ($sites->isEmpty())
+            <x-card class="py-16 text-center">
+                <div class="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-teal-50 text-teal-700">
+                    <i class="bx bx-plus-circle text-2xl"></i>
+                </div>
+                <h2 class="mt-4 text-base font-semibold text-zinc-900">No sites yet</h2>
+                <p class="mx-auto mt-1 max-w-sm text-sm text-zinc-500">
+                    Add a domain to get a tracking snippet and start seeing visitors, pages, and referrers.
+                </p>
+                <a
+                    href="{{ route('sites.create') }}"
+                    class="mt-6 inline-flex items-center gap-1.5 rounded-xl bg-zinc-900 px-3.5 py-2 text-sm font-medium text-white hover:bg-zinc-800"
+                >
+                    Add your first site
+                </a>
+            </x-card>
+        @else
+            <div class="grid gap-4 sm:grid-cols-2">
+                @foreach ($sites as $site)
+                    <a href="{{ route('sites.show', $site) }}" class="group block">
+                        <x-card class="h-full transition group-hover:ring-zinc-300">
+                            <div class="flex items-start justify-between gap-3">
+                                <div class="min-w-0">
+                                    <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-teal-50 text-teal-700">
+                                        <i class="bx bx-globe text-xl"></i>
+                                    </div>
+                                    <h2 class="mt-4 truncate text-base font-semibold text-zinc-900">{{ $site->name }}</h2>
+                                    <p class="mt-0.5 truncate text-sm text-zinc-500">{{ $site->domain }}</p>
+                                </div>
+                                <i class="bx bx-right-arrow-alt text-xl text-zinc-300 transition group-hover:translate-x-0.5 group-hover:text-zinc-500"></i>
                             </div>
-                            <span class="text-gray-400">&rarr;</span>
-                        </div>
+                            <div class="mt-5 flex items-center justify-between border-t border-zinc-100 pt-4 text-xs text-zinc-400">
+                                <span>{{ number_format($site->pageviews_today) }} views today</span>
+                                <span>{{ $site->timezone }}</span>
+                            </div>
+                        </x-card>
                     </a>
-                @empty
-                    <div class="p-6 text-gray-500">
-                        No sites yet. <a href="{{ route('sites.create') }}" class="text-gray-900 underline">Add your first site</a> to get a tracking snippet.
-                    </div>
-                @endforelse
+                @endforeach
             </div>
-        </div>
-    </div>
+        @endif
+    </x-page>
 </x-app-layout>

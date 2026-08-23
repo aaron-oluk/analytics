@@ -1,7 +1,7 @@
 <x-app-layout>
     <x-slot name="title">Add a site</x-slot>
 
-    <x-page width="max-w-xl">
+    <x-page width="w-full">
         <div>
             <a href="{{ route('sites.index') }}" class="inline-flex items-center gap-1 text-sm text-zinc-500 hover:text-zinc-900">
                 <i class="bx bx-left-arrow-alt text-base"></i>

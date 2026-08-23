@@ -5,7 +5,7 @@
         <input
             :type="show ? 'text' : 'password'"
             @disabled($disabled)
-            {{ $attributes->merge(['class' => 'border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm pr-10']) }}
+            {{ $attributes->merge(['class' => 'border-zinc-300 focus:border-teal-600 focus:ring-teal-600 rounded-xl shadow-sm pr-10']) }}
         >
 
         <button
@@ -20,5 +20,5 @@
         </button>
     </div>
 @else
-    <input @disabled($disabled) {{ $attributes->merge(['class' => 'border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm']) }}>
+    <input @disabled($disabled) {{ $attributes->merge(['class' => 'border-zinc-300 focus:border-teal-600 focus:ring-teal-600 rounded-xl shadow-sm']) }}>
 @endif

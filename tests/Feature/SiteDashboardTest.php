@@ -22,6 +22,27 @@ class SiteDashboardTest extends TestCase
 
         $response->assertOk();
         $response->assertSee($site->name);
+        $response->assertSee('Visitors');
+        $response->assertSee('Tracking snippet');
+        $response->assertSee('Top pages');
+    }
+
+    public function test_owner_sees_site_cards_on_the_index(): void
+    {
+        $user = User::factory()->create();
+        $site = Site::factory()->for($user)->create();
+        Event::factory()->for($site)->count(2)->create(['occurred_at' => now()]);
+
+        $response = $this->actingAs($user)->get(route('sites.index'));
+
+        $response->assertOk();
+        $response->assertSee($site->name);
+        $response->assertSee($site->domain);
+        $response->assertSee('2 views today');
+        $response->assertSee('Workspace');
+        $response->assertSee('Add site');
+        $response->assertSee('Profile');
+        $response->assertSee('Log out');
     }
 
     public function test_a_user_cannot_view_someone_elses_site(): void
@@ -38,5 +59,20 @@ class SiteDashboardTest extends TestCase
         $site = Site::factory()->create();
 
         $this->get(route('sites.show', $site))->assertRedirect(route('login'));
+    }
+
+    public function test_create_and_edit_pages_render(): void
+    {
+        $user = User::factory()->create();
+        $site = Site::factory()->for($user)->create();
+
+        $this->actingAs($user)->get(route('sites.create'))
+            ->assertOk()
+            ->assertSee('Add a site');
+
+        $this->actingAs($user)->get(route('sites.edit', $site))
+            ->assertOk()
+            ->assertSee('Site settings')
+            ->assertSee($site->domain);
     }
 }

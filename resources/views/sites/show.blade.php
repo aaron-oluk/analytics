@@ -1,105 +1,165 @@
+@php
+    $rangeLabel = match ($range) {
+        'today' => 'Today',
+        '30d' => 'Last 30 days',
+        '90d' => 'Last 90 days',
+        default => 'Last 7 days',
+    };
+    $snippet = '<script defer src="'.url('/tracker.js').'" data-site="'.$site->domain.'"></script>';
+@endphp
+
 <x-app-layout>
-    <x-slot name="header">
-        <div class="flex justify-between items-center">
-            <div>
-                <h2 class="font-semibold text-xl text-gray-800 leading-tight">{{ $site->name }}</h2>
-                <p class="text-sm text-gray-500">{{ $site->domain }}</p>
-            </div>
-            <div class="flex items-center gap-4">
-                <span class="inline-flex items-center gap-1.5 text-sm text-gray-600">
-                    <span class="h-2 w-2 rounded-full bg-green-500"></span>
-                    {{ $realtimeVisitors }} visitor{{ $realtimeVisitors === 1 ? '' : 's' }} right now
-                </span>
-                <a href="{{ route('sites.edit', $site) }}" class="text-sm text-gray-500 hover:text-gray-800">Settings</a>
-            </div>
-        </div>
-    </x-slot>
+    <x-slot name="title">{{ $site->name }}</x-slot>
 
-    <div class="py-12">
-        <div class="max-w-6xl mx-auto sm:px-6 lg:px-8 space-y-6">
-            @if (session('status'))
-                <div class="p-4 bg-green-50 text-green-700 rounded-md text-sm">{{ session('status') }}</div>
-            @endif
+    <x-page>
+        <x-flash />
 
-            <details class="bg-white shadow-sm sm:rounded-lg p-6" {{ $overview['pageviews'] === 0 ? 'open' : '' }}>
-                <summary class="cursor-pointer font-semibold text-gray-800">Tracking snippet</summary>
-                <p class="text-sm text-gray-500 mt-2">Paste this right before the closing <code>&lt;/body&gt;</code> tag of every page you want to track. No cookies, no consent banner required.</p>
-                <pre class="mt-3 bg-gray-900 text-gray-100 text-xs p-4 rounded-md overflow-x-auto"><code>&lt;script defer src="{{ url('/tracker.js') }}" data-site="{{ $site->domain }}"&gt;&lt;/script&gt;</code></pre>
-            </details>
-
-            <div class="flex gap-2">
-                @foreach (['today' => 'Today', '7d' => '7 days', '30d' => '30 days', '90d' => '90 days'] as $value => $label)
-                    <a href="{{ route('sites.show', [$site, 'range' => $value]) }}"
-                       class="px-3 py-1.5 text-sm rounded-md {{ $range === $value ? 'bg-gray-800 text-white' : 'bg-white text-gray-600 hover:bg-gray-100' }}">
-                        {{ $label }}
-                    </a>
-                @endforeach
+        <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+            <div class="min-w-0">
+                <div class="flex flex-wrap items-center gap-3">
+                    <h1 class="truncate text-2xl font-semibold tracking-tight text-zinc-900">{{ $site->name }}</h1>
+                    <span class="inline-flex items-center gap-1.5 rounded-full bg-white px-2.5 py-1 text-xs font-medium text-zinc-600 ring-1 ring-zinc-200">
+                        <span class="live-dot h-1.5 w-1.5 rounded-full {{ $realtimeVisitors > 0 ? 'bg-emerald-500' : 'bg-zinc-300' }}"></span>
+                        {{ $realtimeVisitors }} live
+                    </span>
+                </div>
+                <p class="mt-1 truncate text-sm text-zinc-500">{{ $site->domain }} · {{ $rangeLabel }}</p>
             </div>
 
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                @foreach ([
-                    'Visitors' => number_format($overview['visitors']),
-                    'Pageviews' => number_format($overview['pageviews']),
-                    'Bounce rate' => $overview['bounce_rate'].'%',
-                    'Avg. duration' => gmdate('i:s', $overview['avg_duration_seconds']),
-                ] as $label => $value)
-                    <div class="bg-white shadow-sm sm:rounded-lg p-6">
-                        <div class="text-sm text-gray-500">{{ $label }}</div>
-                        <div class="text-2xl font-semibold text-gray-900 mt-1">{{ $value }}</div>
-                    </div>
-                @endforeach
-            </div>
-
-            <div class="bg-white shadow-sm sm:rounded-lg p-6">
-                <canvas id="visitorsChart" height="80"></canvas>
-            </div>
-
-            <div class="grid md:grid-cols-2 gap-6">
-                @foreach ([
-                    'Top pages' => $topPages,
-                    'Top referrers' => $topReferrers,
-                    'Countries' => $topCountries,
-                    'Devices' => $topDevices,
-                    'Browsers' => $topBrowsers,
-                ] as $title => $rows)
-                    <div class="bg-white shadow-sm sm:rounded-lg p-6">
-                        <h3 class="font-semibold text-gray-800 mb-3">{{ $title }}</h3>
-                        @if (count($rows) === 0)
-                            <p class="text-sm text-gray-400">No data yet.</p>
-                        @else
-                            <table class="w-full text-sm">
-                                @foreach ($rows as $row)
-                                    <tr class="border-t">
-                                        <td class="py-2 text-gray-700 truncate max-w-xs">{{ $row->value }}</td>
-                                        <td class="py-2 text-right text-gray-500">{{ number_format($row->visitors) }}</td>
-                                    </tr>
-                                @endforeach
-                            </table>
-                        @endif
-                    </div>
-                @endforeach
+            <div class="flex flex-wrap items-center gap-2">
+                <div class="inline-flex rounded-xl bg-white p-1 ring-1 ring-zinc-200">
+                    @foreach (['today' => 'Today', '7d' => '7d', '30d' => '30d', '90d' => '90d'] as $value => $label)
+                        <a
+                            href="{{ route('sites.show', [$site, 'range' => $value]) }}"
+                            class="rounded-lg px-3 py-1.5 text-sm font-medium transition {{ $range === $value ? 'bg-zinc-900 text-white shadow-sm' : 'text-zinc-500 hover:text-zinc-900' }}"
+                        >
+                            {{ $label }}
+                        </a>
+                    @endforeach
+                </div>
+                <a
+                    href="{{ route('sites.edit', $site) }}"
+                    class="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-white text-zinc-500 ring-1 ring-zinc-200 transition hover:text-zinc-900"
+                    title="Settings"
+                >
+                    <i class="bx bx-cog text-lg"></i>
+                </a>
             </div>
         </div>
-    </div>
+
+        <details class="group" {{ $overview['pageviews'] === 0 ? 'open' : '' }}>
+            <x-card padding="px-5 py-4">
+                <summary class="flex cursor-pointer list-none items-center justify-between gap-3">
+                    <span class="flex items-center gap-2 text-sm font-semibold text-zinc-900">
+                        <i class="bx bx-code-alt text-lg text-zinc-400"></i>
+                        Tracking snippet
+                    </span>
+                    <i class="bx bx-chevron-down text-xl text-zinc-400 transition group-open:rotate-180"></i>
+                </summary>
+                <p class="mt-3 text-sm text-zinc-500">
+                    Paste this right before the closing <code class="rounded bg-zinc-100 px-1 py-0.5 text-xs text-zinc-700">&lt;/body&gt;</code>
+                    tag. No cookies, no consent banner.
+                </p>
+                <div
+                    x-data="{ copied: false, snippet: {{ \Illuminate\Support\Js::from($snippet) }} }"
+                    class="mt-3 flex items-start gap-2"
+                >
+                    <pre class="min-w-0 flex-1 overflow-x-auto rounded-xl bg-zinc-950 px-4 py-3 text-xs leading-relaxed text-zinc-100"><code x-text="snippet"></code></pre>
+                    <button
+                        type="button"
+                        @click="navigator.clipboard.writeText(snippet); copied = true; setTimeout(() => copied = false, 1600)"
+                        class="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-xl bg-zinc-900 px-3 text-xs font-medium text-white hover:bg-zinc-800"
+                    >
+                        <i class="bx text-base" :class="copied ? 'bx-check' : 'bx-copy'"></i>
+                        <span x-text="copied ? 'Copied' : 'Copy'"></span>
+                    </button>
+                </div>
+            </x-card>
+        </details>
+
+        <x-card>
+            <div class="grid grid-cols-2 gap-6 md:grid-cols-4 md:divide-x md:divide-zinc-100">
+                <x-stat class="md:pe-6" label="Visitors" :value="number_format($overview['visitors'])" icon="bx-user" />
+                <x-stat class="md:px-6" label="Pageviews" :value="number_format($overview['pageviews'])" icon="bx-show" />
+                <x-stat class="md:px-6" label="Bounce rate" :value="$overview['bounce_rate'].'%'" icon="bx-exit" />
+                <x-stat class="md:ps-6" label="Avg. duration" :value="gmdate('i:s', $overview['avg_duration_seconds'])" icon="bx-time-five" />
+            </div>
+        </x-card>
+
+        <x-card>
+            <div class="mb-4 flex items-center justify-between">
+                <h2 class="text-sm font-semibold text-zinc-900">Visitors</h2>
+                <span class="text-xs text-zinc-400">{{ $rangeLabel }}</span>
+            </div>
+            <canvas id="visitorsChart" height="88"></canvas>
+        </x-card>
+
+        <div class="grid gap-6 md:grid-cols-2">
+            <x-breakdown title="Top pages" icon="bx-file" :rows="$topPages" />
+            <x-breakdown title="Top referrers" icon="bx-link" :rows="$topReferrers" />
+            <x-breakdown title="Countries" icon="bx-globe" :rows="$topCountries" />
+            <div class="grid gap-6">
+                <x-breakdown title="Devices" icon="bx-devices" :rows="$topDevices" />
+                <x-breakdown title="Browsers" icon="bx-window" :rows="$topBrowsers" />
+            </div>
+        </div>
+    </x-page>
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
     <script>
+        const labels = @json(array_keys($timeseries));
+        const values = @json(array_values($timeseries));
+
         new Chart(document.getElementById('visitorsChart'), {
             type: 'line',
             data: {
-                labels: @json(array_keys($timeseries)),
+                labels,
                 datasets: [{
                     label: 'Visitors',
-                    data: @json(array_values($timeseries)),
-                    borderColor: '#1f2937',
-                    backgroundColor: 'rgba(31,41,55,0.08)',
-                    tension: 0.3,
+                    data: values,
+                    borderColor: '#0d9488',
+                    backgroundColor: (context) => {
+                        const { ctx, chartArea } = context.chart;
+                        if (!chartArea) return 'rgba(13, 148, 136, 0.08)';
+                        const gradient = ctx.createLinearGradient(0, chartArea.top, 0, chartArea.bottom);
+                        gradient.addColorStop(0, 'rgba(13, 148, 136, 0.22)');
+                        gradient.addColorStop(1, 'rgba(13, 148, 136, 0)');
+                        return gradient;
+                    },
+                    borderWidth: 2,
+                    tension: 0.35,
                     fill: true,
+                    pointRadius: 0,
+                    pointHoverRadius: 4,
+                    pointHoverBackgroundColor: '#0d9488',
                 }],
             },
             options: {
-                plugins: { legend: { display: false } },
-                scales: { y: { beginAtZero: true, ticks: { precision: 0 } } },
+                responsive: true,
+                interaction: { mode: 'index', intersect: false },
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: '#18181b',
+                        titleColor: '#a1a1aa',
+                        bodyColor: '#fff',
+                        padding: 10,
+                        displayColors: false,
+                    },
+                },
+                scales: {
+                    x: {
+                        grid: { display: false },
+                        ticks: { color: '#a1a1aa', maxRotation: 0, autoSkipPadding: 16 },
+                        border: { display: false },
+                    },
+                    y: {
+                        beginAtZero: true,
+                        ticks: { precision: 0, color: '#a1a1aa' },
+                        grid: { color: 'rgba(24, 24, 27, 0.06)' },
+                        border: { display: false },
+                    },
+                },
             },
         });
     </script>
