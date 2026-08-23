@@ -171,13 +171,10 @@ public/tracker.js                                customer-site snippet
 
 Auth, profile, and Blade layout come from Laravel Breeze (Blade + Alpine + Tailwind).
 
-## What Meridian is
+## Why "Meridian"
 
-**Meridian is not used in this project.** Nothing in the app, composer dependencies, or tracker refers to it.
+This app's original architecture design document — the one that laid out the ingestion pipeline, two-tier storage, privacy model, and scaling path described above — was titled **Meridian**. It was the working codename for this design, not a dependency or component: the name doesn't appear anywhere in the code, composer dependencies, or tracker.
 
-In analytics, “Meridian” usually means [Google Meridian](https://developers.google.com/meridian/docs/basics/meridian-introduction): an open-source **marketing mix model (MMM)**. It estimates how much each ad channel contributed to a KPI (revenue, conversions) using aggregated spend and outcome data, then suggests budget splits. It is Bayesian causal inference on weekly/geo totals — not a pageview tracker.
+Confusingly, [Google Meridian](https://developers.google.com/meridian/docs/basics/meridian-introduction) is a different, unrelated open-source project: a **marketing mix model (MMM)** that estimates how much each ad channel contributed to a KPI using aggregated spend and outcome data. It's Bayesian causal inference on weekly/geo totals, not a pageview tracker, and shares nothing with this app beyond the name.
 
-This app answers “who visited which pages.” Meridian answers “which marketing channels caused the outcome.” They can sit in the same stack later (export daily totals from here into an MMM), but they solve different problems.
-
-Other things also named Meridian (Cursor plugins, admin templates, chat models) are unrelated to this repo.
-# analytics
+This app answers "who visited which pages." Google Meridian answers "which marketing channels caused the outcome." They could sit in the same stack later (export daily totals from here into an MMM), but they solve different problems and neither one is built on the other.
